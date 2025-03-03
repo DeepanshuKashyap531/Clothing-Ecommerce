@@ -1,71 +1,112 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth,
-         signInWithRedirect ,
-         signInWithPopup,
-         GoogleAuthProvider} from 'firebase/auth' // for creatting google popup buton 
-
+import { initializeApp } from "firebase/app";
+import {
+  getAuth,
+  signInWithRedirect,
+  signInWithPopup,
+  getRedirectResult,
+  GithubAuthProvider,
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword
+} from "firebase/auth";
 import {
   getFirestore,
   doc,
   getDoc,
-  setDoc
-} from 'firebase/firestore' // for firebase database
+  setDoc,
+} from "firebase/firestore";
 
-// Your web app's Firebase configuration
+// ✅ Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyAWXNbry-Rj05jDaCI9KgqbHAMmaYPxwJI",
-    authDomain: "clothing-db-17a66.firebaseapp.com",
-    projectId: "clothing-db-17a66",
-    storageBucket: "clothing-db-17a66.firebasestorage.app",
-    messagingSenderId: "793075269383",
-    appId: "1:793075269383:web:ed728e5e21a2b557f38fa2"
-  };
+  apiKey: "AIzaSyAWXNbry-Rj05jDaCI9KgqbHAMmaYPxwJI",
+  authDomain: "clothing-db-17a66.firebaseapp.com",
+  projectId: "clothing-db-17a66",
+  storageBucket: "clothing-db-17a66.firebasestorage.app",
+  messagingSenderId: "793075269383",
+  appId: "1:793075269383:web:ed728e5e21a2b557f38fa2",
+};
 
-  const firebaseApp = initializeApp(firebaseConfig)
-  const provider = new GoogleAuthProvider();
-  
-  
-  provider.setCustomParameters({
-    prompt:"select_account"
-  });
+// ✅ Initialize Firebase
+const firebaseApp = initializeApp(firebaseConfig);
+export const auth = getAuth(firebaseApp);
+export const db = getFirestore(firebaseApp);
 
+// ✅ Set up Google Auth Provider
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: "select_account" });
 
-  export const auth = getAuth();
-  export const signInWithGooglePopup = () => signInWithPopup(auth,provider);
+// ✅ Set up GitHub Auth Provider
+const githubProvider = new GithubAuthProvider();
 
-  export const db = getFirestore();
+// ✅ Sign-in functions with error handling
+export const signInWithGooglePopup = async () => {
+  try {
+    return await signInWithPopup(auth, googleProvider);
+  } catch (error) {
+    console.error("Google Sign-In Error:", error);
+  }
+};
 
-  export const createUserDocumentFromAuth = async (userAuth) =>{
-    const userDocRef = doc(db ,'users',userAuth.uid);
+export const signInWithGoogleRedirect = async () => {
+  try {
+    return await signInWithRedirect(auth, googleProvider);
+  } catch (error) {
+    console.error("Google Redirect Sign-In Error:", error);
+  }
+};
 
-    console.log(userDocRef);
+export const signInWithGitHub = async () => {
+  try {
+    return await signInWithPopup(auth, githubProvider);
+  } catch (error) {
+    console.error("GitHub Sign-In Error:", error);
+  }
+};
 
-    const userSnapshot = await getDoc(userDocRef)
-    // console.log(userSnapshot)
-    // console.log(userSnapshot.exists()); // exists method is used to check if the given data present in the database
+// ✅ Get Redirected User After Sign-In
+export const getRedirectedUser = async () => {
+  try {
+    const response = await getRedirectResult(auth);
+    return response ? response.user : null;
+  } catch (error) {
+    console.error("Error getting redirected user:", error);
+  }
+};
 
+// ✅ Create User Document in Firestore
+export const createUserDocumentFromAuth = async (userAuth, additionInformation= {} ) => {
+  if (!userAuth) {
+    console.error("No user authentication data found.");
+    return;
+  }
 
-    if(!userSnapshot.exists()){
-      const {displayName,email} = userAuth;
-      const createdAt = new Date();
+  const userDocRef = doc(db, "users", userAuth.uid);
+  const userSnapshot = await getDoc(userDocRef);
 
-      try{
-        await setDoc(userDocRef,{
-          displayName,
-          email,
-          createdAt
-        })
-      }catch(error){
-        console.log('errior creatinf g the user',error.message)
-      }
+  if (!userSnapshot.exists()) {
+    const { displayName, email } = userAuth;
+    const createdAt = new Date();
+
+    try {
+      await setDoc(userDocRef, { displayName,
+         email,
+        createdAt,
+        additionInformation });
+      console.log("User document created successfully!");
+    } catch (error) {
+      console.error("Error creating user document:", error);
     }
+  }
 
-    return userDocRef;
-    // if yser data does't exists
-    //create / set the diocument with the data from useraUTH In ,my collection
+  return userDocRef;
+};
 
-    // if user data exists
+export const createAuthUserWithEmailAndPassword = async (email, password) => {
+  if (!email || !password) return;
 
-    
-    //return userDocRefrence
-    } 
+  try {
+    const auth = getAuth(); // ✅ Get Firebase auth instance
+    return await createUserWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    console.error("Error creating user with email and password:", error);
+  }
+};
