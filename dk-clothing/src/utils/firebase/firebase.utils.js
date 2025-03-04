@@ -6,7 +6,9 @@ import {
   getRedirectResult,
   GithubAuthProvider,
   GoogleAuthProvider,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
+
 } from "firebase/auth";
 import {
   getFirestore,
@@ -106,6 +108,17 @@ export const createAuthUserWithEmailAndPassword = async (email, password) => {
   try {
     const auth = getAuth(); // ✅ Get Firebase auth instance
     return await createUserWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    console.error("Error creating user with email and password:", error);
+  }
+};
+
+export const signInAuthUserWithEmailAndPassword = async (email, password) => {
+  if (!email || !password) return;
+
+  try {
+    const auth = getAuth(); // ✅ Get Firebase auth instance
+    return await signInWithEmailAndPassword(auth, email, password);
   } catch (error) {
     console.error("Error creating user with email and password:", error);
   }
