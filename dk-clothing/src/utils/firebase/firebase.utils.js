@@ -7,7 +7,9 @@ import {
   GithubAuthProvider,
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
 
 } from "firebase/auth";
 import {
@@ -123,3 +125,8 @@ export const signInAuthUserWithEmailAndPassword = async (email, password) => {
     console.error("Error creating user with email and password:", error);
   }
 };
+
+export const SignOutUser = () => signOut(auth);
+
+export const onAuthChangedListner = (callback) =>
+  onAuthStateChanged(auth,callback)
